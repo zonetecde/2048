@@ -44,6 +44,10 @@ namespace _2048.GameBoard
         {
             if (piece_number != 0)
             {
+                int temp_ = Convert.ToInt32((CaseNumber.ToString()));
+                // Attribut la nouvelle valeur à la case
+                CaseNumber = piece_number;
+
                 // Change le numéro de la case
                 textBlock_case.Text = piece_number.ToString();
                 // Change la couleur de fond qui va avec la case
@@ -53,7 +57,7 @@ namespace _2048.GameBoard
                 textBlock_case.Foreground = Utilities.ForegroundColorOf(piece_number);
 
                 // Si la case est vide et que l'on veut qu'elle soit un nombre
-                if (CaseNumber == 0 &&  anim)
+                if (temp_ == 0 &&  anim)
                 {
                     // Animation pop up de la case
                     await Task.Delay(200);
@@ -74,9 +78,11 @@ namespace _2048.GameBoard
                 border_case.Width = 0;
                 border_case.Height = 0;
             }
+        }
 
-            // Attribut la nouvelle valeur à la case
-            CaseNumber = piece_number;
+        private void UserControl_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            MessageBox.Show(CaseNumber.ToString());
         }
     }
 }

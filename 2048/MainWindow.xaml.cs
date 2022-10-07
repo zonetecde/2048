@@ -25,12 +25,14 @@ namespace _2048
 
         // Relative au plateau de jeu :
         // Y;X
-        UserControl_GameBoardCase[,] GameBoard = new UserControl_GameBoardCase[4, 4]; // Le plateau de jeu contenant les numéros. 0 = aucun numéro dans la case.
+        private static UserControl_GameBoardCase[,] GameBoard; // Le plateau de jeu contenant les numéros. 0 = aucun numéro dans la case.
 
         // Relative au déroulement du jeu :
         Random Rdn = new Random();
-        bool DidMovement = false; // est-ce que un mouvement a été fait dans une des 4 directions
-        public static bool IsInMovement = false; // est-ce que un mouvement est en cours?
+        bool DidMovement; // est-ce que un mouvement a été fait dans une des 4 directions
+        internal static bool IsInMovement; // est-ce que un mouvement est en cours?
+        internal static List<Coordonnées> changedCo; // liste des coordonées changé lors d'un déplacement
+        private int Score;
 
 
         public MainWindow()
@@ -39,13 +41,24 @@ namespace _2048
 
             // - Initialize les valeurs dans le tableau 2D GameBoard
             // - Ajout du plateau de jeu
+            InitVariables();
+
+        }
+
+        private void InitVariables()
+        {
+            GameBoard = new UserControl_GameBoardCase[4, 4];
+            DidMovement = false; // est-ce que un mouvement a été fait dans une des 4 directions
+            IsInMovement = false; // est-ce que un mouvement est en cours?
+            changedCo = new List<Coordonnées>(); // liste des coordonées changé lors d'un déplacement
+            Score = 0;
+
             for (int x = 0; x < 4; x++)
                 for (int y = 0; y < 4; y++)
                 {
                     GameBoard[x, y] = new UserControl_GameBoardCase(); // 0 = la case est vide
                     uniformGrid_gameBoard.Children.Add(GameBoard[x, y]);
                 }
-
         }
 
         /// <summary>
@@ -98,6 +111,7 @@ namespace _2048
         {
             for (int i = 0; i < 2; i++)
                 AddPieceInRandomPlace();
+
         }
 
         /// <summary>
@@ -113,7 +127,7 @@ namespace _2048
         /// 
         /// </summary>
         /// <param name="piece_number">Le numéro de la pièce à ajouter, par défaut 2</param>
-        internal void AddPieceInRandomPlace(int piece_number = 2)
+        internal void AddPieceInRandomPlace(int piece_number = 2, int y_ = -1, int x_ = -1)
         {
             // On liste les cases vides
             var coordonnées_case_vide = new List<Coordonnées>();
@@ -129,20 +143,23 @@ namespace _2048
                 // On prend une case vide aléatoire 
                 Coordonnées rdn_co = coordonnées_case_vide[Rdn.Next(coordonnées_case_vide.Count)];
 
+                // Si coordonné non random
+                if (y_ != -1 && x_ != -1)
+                {
+                    rdn_co.X = x_;
+                    rdn_co.Y = y_;                    
+                }
+
                 // On ajoute à cette case vide le numéro 'piece_number'
                 GameBoard[rdn_co.X, rdn_co.Y].ChangeCaseNumber(piece_number);
-
-                // Si aucun déplacement n'est possible on perd la partie 
-                if(!IsMovingPossible())
-                {
-                    // TODO
-                    MessageBox.Show("game over");
-                }
             }
-            else // Le plateau est plein, gameOver
+
+            // Si aucun déplacement n'est possible on perd la partie 
+            if (!IsMovingPossible())
             {
-                // TODO
-                MessageBox.Show("game over");
+                // GAME OVER
+                grid_gameOver.Visibility = Visibility.Visible;
+                textblock_gameOver.Text = "GAME OVER!\nVotre score est de " + Score;
             }
         }
 
@@ -165,9 +182,54 @@ namespace _2048
         /// 
         /// </summary>
         /// <returns>Est-ce que l'ont peut bouger dans une des 4 directions (= est-ce que le joueur a perdu)</returns>
-        private bool IsMovingPossible()
+        internal static bool IsMovingPossible()
         {
-            return true;
+            // si il y a une case vide une direction est forcément possible
+
+            for (int x = 0; x < 4; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    if (GameBoard[x, y].CaseNumber == 0)
+                        return true;
+                }
+            }
+
+            // check pour un plateau plein
+            // si 2 même numéro sont à côté = true 
+            for (int x = 0; x < 4; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    try
+                    {
+                        if (GameBoard[y - 1, x].CaseNumber == GameBoard[y, x].CaseNumber)
+                            return true;
+                    }
+                    catch { }
+                    try
+                    {
+                        if (GameBoard[y + 1, x].CaseNumber == GameBoard[y, x].CaseNumber)
+                            return true;
+                    }
+                    catch { }
+                    try
+                    {
+                        if (GameBoard[y, x + 1].CaseNumber == GameBoard[y, x].CaseNumber)
+                            return true;
+                    }
+                    catch { }
+                    try
+                    {
+                        if (GameBoard[y, x - 1].CaseNumber == GameBoard[y, x].CaseNumber)
+                            return true;
+                    }
+                    catch { }
+                }
+            }
+
+            // game over, sinon on serait déjà sortie de la fonction
+            return false;
         }
 
         /// <summary>
@@ -176,7 +238,7 @@ namespace _2048
         ///     Une touche du clavier a été appuyé
         /// 
         /// _Do:
-        ///     Si la touche du clavier appuyé est une des 4 flèches directionnel, on appel la méthode permettant d'effectuant le
+        ///     Si la touche du clavier appuyé est une des 4 flèches directionnel, on appel la méthode permettant d'effectuer le
         ///     mouvement sur le plateau de jeu.
         /// 
         /// </summary>
@@ -188,7 +250,7 @@ namespace _2048
             if(e.Key == Key.Up || e.Key == Key.Down || e.Key == Key.Left || e.Key == Key.Right)
             {
                 // effectue le mouvement 
-                MoveInDirection(e.Key);
+                MoveInDirection(e.Key, false);
             }
         }
 
@@ -202,12 +264,10 @@ namespace _2048
         /// 
         /// </summary>
         /// <param name="direction">La direction</param>
-        private void MoveInDirection(Key direction)
+        private bool MoveInDirection(Key direction, bool directionCheck)
         {
-            // pour les boucles for on va de la direction voulu à la direction opposé
-            // les cases doivent aller de droite à gauche :
-
-            if (!IsInMovement)
+            // si il y a pas animation on cours
+            if (canvas_gameBoard_animation.Children.Count == 0 && !IsInMovement)
             {
                 DidMovement = false;
 
@@ -232,7 +292,7 @@ namespace _2048
                                     for (int i = 3; i > x; i--)
                                         coordonnées_possible.Add(new Coordonnées(i, y));
 
-                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y));
+                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y), directionCheck);
                                 }
                             }
                         }
@@ -258,7 +318,7 @@ namespace _2048
                                     for (int i = 3; i > y; i--)
                                         coordonnées_possible.Add(new Coordonnées(x, i));
 
-                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y));
+                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y), directionCheck);
                                 }
                             }
                         }
@@ -284,7 +344,7 @@ namespace _2048
                                     for (int i = 0; i < y; i++)
                                         coordonnées_possible.Add(new Coordonnées(x, i));
 
-                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y));
+                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y), directionCheck);
                                 }
                             }
                         }
@@ -310,7 +370,7 @@ namespace _2048
                                     for (int i = 0; i < x; i++)
                                         coordonnées_possible.Add(new Coordonnées(i, y));
 
-                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y));
+                                    CheckAndMoveIfMovingPossible(caseNumber, coordonnées_possible, new Coordonnées(x, y), directionCheck);
                                 }
                             }
                         }
@@ -318,13 +378,37 @@ namespace _2048
                         break;
                 }
 
+                // Si on voulait juste check les directions on s'arrête ici
+                if(directionCheck)
+                    return DidMovement;
 
                 // Ajoute une pièce car on a fait une direction
                 if (DidMovement)
                 {
+                    changedCo.ForEach(x =>
+                    {
+                        GameBoard[x.Y, x.X].Tag = "";
+                    });
+
+                    changedCo.Clear();
+
+                    for (int x = 0; x < 4; x++)
+                    {
+                        for (int y = 0; y < 4; y++)
+                        {
+                            if (GameBoard[y, x].textBlock_case.Text == "0" || GameBoard[y, x].CaseNumber ==0)
+                            {
+                                GameBoard[y, x].border_case.Width = 0;
+                                GameBoard[y, x].border_case.Height = 0;
+                            }
+                        }
+                    }
+
                     AddPieceInRandomPlace();
                 }
             }
+
+            return true;
         }
 
         /// <summary>
@@ -338,18 +422,18 @@ namespace _2048
         /// </summary>
         /// <param name="caseNumber"></param>
         /// <param name="coordonnées_possible"></param>
-        private void CheckAndMoveIfMovingPossible(int caseNumber, List<Coordonnées> coordonnées_possible, Coordonnées cordonnée_toMove)
+        /// <param name="cordonnée_toMove"></param>
+        /// <param name="directionCheck"></param>
+        private void CheckAndMoveIfMovingPossible(int caseNumber, List<Coordonnées> coordonnées_possible, Coordonnées cordonnée_toMove, bool directionCheck)
         {
-            List<Coordonnées> changedCo = new List<Coordonnées>();
-
             foreach(Coordonnées coordonnée in coordonnées_possible)
             {
                 // on vérifie qu'il n'y a pas d'obstacle entre les 2 coordonnées (= une case différente de la case a déplacé)
                 bool obastacle = false;
+
                 for (int i = coordonnées_possible.IndexOf(coordonnée) + 1; i < coordonnées_possible.Count; i++)
                 {
-                    if (GameBoard[coordonnées_possible[i].Y, coordonnées_possible[i].X].CaseNumber != 0
-                        || GameBoard[coordonnées_possible[i].Y, coordonnées_possible[i].X].Tag.ToString() == "changed")
+                    if (GameBoard[coordonnées_possible[i].Y, coordonnées_possible[i].X].CaseNumber != 0)
                     {
                         // pas possible : il y a un obstacle
                         obastacle = true;
@@ -359,22 +443,31 @@ namespace _2048
 
                 if (!obastacle)
                 {
-                    if (GameBoard[coordonnée.Y, coordonnée.X].CaseNumber == caseNumber)
+                    if (GameBoard[coordonnée.Y, coordonnée.X].CaseNumber == caseNumber
+                        && GameBoard[coordonnée.Y, coordonnée.X].Tag != "changed")
                     {
-                        // On effectue une animation de déplacement 
+                        // on veut pas vraiment faire bouger la pièce, on voulait
+                        // juste voir si c'était possible
+                        if (!directionCheck)
+                        {
+                            // préviens que l'on vient de changer ceci, donc qu'il n'est pas possible de combiner avec cette pièce
+                            changedCo.Add(new Coordonnées(coordonnée.X, coordonnée.Y));
 
-                        Point posDepart = GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
-                        Point posArrivee = GameBoard[coordonnée.Y, coordonnée.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
+                            // On effectue une animation de déplacement 
 
-                        Animation.SlideAnimation(canvas_gameBoard_animation, posDepart, posArrivee, GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X], GameBoard[coordonnée.Y, coordonnée.X], caseNumber * 2);
+                            Point posDepart = GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
+                            Point posArrivee = GameBoard[coordonnée.Y, coordonnée.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
 
-                        GameBoard[coordonnée.Y, coordonnée.X].CaseNumber = caseNumber * 2;
-                        GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].CaseNumber = 0;
-                        GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].ChangeCaseNumber(0, false);
+                            Animation.SlideAnimation(canvas_gameBoard_animation, posDepart, posArrivee, GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X], GameBoard[coordonnée.Y, coordonnée.X], caseNumber * 2);
 
-                        // préviens que l'on vient de changer ceci, donc qu'il n'est pas possible de combiner avec cette pièce
-                        GameBoard[coordonnée.Y, coordonnée.X].Tag = new string("changed");
-                        changedCo.Add(new Coordonnées(coordonnée.X, coordonnée.Y));
+                            GameBoard[coordonnée.Y, coordonnée.X].Tag = "changed";
+                            GameBoard[coordonnée.Y, coordonnée.X].CaseNumber = caseNumber * 2;
+                            Score += caseNumber * 2;
+                            label_score.Content = "SCORE : " + Score;
+                            GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].CaseNumber = 0;
+                            GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].ChangeCaseNumber(0, false);
+
+                        }
 
                         DidMovement = true;
                         // On sort de la boucle, on l'a déplacé le plus à [direction] possible
@@ -382,22 +475,28 @@ namespace _2048
 
                     }
                     // Ou si la case est vide
-                    else if (GameBoard[coordonnée.Y, coordonnée.X].CaseNumber == 0)
+                    else if (GameBoard[coordonnée.Y, coordonnée.X].CaseNumber == 0
+                        && GameBoard[coordonnée.Y, coordonnée.X].Tag != "changed")
                     {
-                        // On effectue une animation de déplacement 
+                        // on veut pas vraiment faire bouger la pièce, on voulait
+                        // juste voir si c'était possible
+                        if (!directionCheck)
+                        {
+                            // préviens que l'on vient de changer ceci, donc qu'il n'est pas possible de combiner avec cette pièce
+                            changedCo.Add(new Coordonnées(coordonnée.X, coordonnée.Y));
 
-                        Point posDepart = GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
-                        Point posArrivee = GameBoard[coordonnée.Y, coordonnée.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
+                            // On effectue une animation de déplacement 
+                            Point posDepart = GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
+                            Point posArrivee = GameBoard[coordonnée.Y, coordonnée.X].TranslatePoint(new Point(0, 0), uniformGrid_gameBoard);
 
-                        Animation.SlideAnimation(canvas_gameBoard_animation, posDepart, posArrivee, GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X], GameBoard[coordonnée.Y, coordonnée.X], caseNumber);
+                            Animation.SlideAnimation(canvas_gameBoard_animation, posDepart, posArrivee, GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X], GameBoard[coordonnée.Y, coordonnée.X], caseNumber);
 
-                        GameBoard[coordonnée.Y, coordonnée.X].CaseNumber = caseNumber;
-                        GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].CaseNumber = 0;
-                        GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].ChangeCaseNumber(0, false);
+                            //GameBoard[coordonnée.Y, coordonnée.X].Tag = "changed";
+                            GameBoard[coordonnée.Y, coordonnée.X].CaseNumber = caseNumber;
+                            GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].CaseNumber = 0;
+                            GameBoard[cordonnée_toMove.Y, cordonnée_toMove.X].ChangeCaseNumber(0, false);
 
-                        // préviens que l'on vient de changer ceci, donc qu'il n'est pas possible de combiner avec cette pièce
-                        GameBoard[coordonnée.Y, coordonnée.X].Tag = new string("changed");
-                        changedCo.Add(new Coordonnées(coordonnée.X, coordonnée.Y));
+                        }
 
                         DidMovement = true;
                         // On sort de la boucle, on l'a déplacé le plus à [direction] possible
@@ -405,16 +504,24 @@ namespace _2048
                     }
                 }
             }
+        }
 
-            changedCo.ForEach(x =>
+        /// <summary>
+        /// Recommence la game
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void grid_gameOver_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if(e.LeftButton == MouseButtonState.Pressed)
             {
-                GameBoard[x.Y, x.X].Tag = "";
-                if (GameBoard[x.Y, x.X].textBlock_case.Text == "0")
-                {
-                    GameBoard[x.Y, x.X].border_case.Width = 0;
-                    GameBoard[x.Y, x.X].border_case.Height = 0;
-                }
-            });
+                grid_gameOver.Visibility = Visibility.Hidden;
+                label_score.Content = "SCORE : 0";
+                uniformGrid_gameBoard.Children.Clear();
+                InitVariables();
+                for (int i = 0; i < 2; i++)
+                    AddPieceInRandomPlace();
+            }
         }
     }
 }

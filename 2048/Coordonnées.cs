@@ -8,7 +8,7 @@
             Y = y;
         }
 
-        internal int X { get; }
-        internal int Y { get; }
+        internal int X { get; set; }
+        internal int Y { get; set; }
     }
 }

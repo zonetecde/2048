@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -47,6 +48,8 @@ namespace _2048.GameBoard
                         // On stop l'animation
                         MainWindow.IsInMovement = false;
                         t_anim.Stop();
+
+                        MainWindow.IsMovingPossible();
                     }
                 });
             };
@@ -61,6 +64,7 @@ namespace _2048.GameBoard
         /// <param name="posDepart">La pos de départ de l'animation</param>
         /// <param name="posArrivee">La pos de fin de l'animation</param>
         /// <param name="userControl_GameBoardCase">Référence pour l'UI à animer</param>
+        /// <param name="addition">Si on est dans un cas d'addition entre 2 cases pour former une plus grande on doit vérif une condition</param>
         internal static void SlideAnimation(Canvas canvas_gameBoard_animation, Point posDepart, Point posArrivee, UserControl_GameBoardCase userControl_GameBoardCase, UserControl_GameBoardCase userControl_GameBoardCase_final, int finalNumber)
         {
             double SLIDE_ANIMATION_SPEED = 40;
@@ -97,7 +101,7 @@ namespace _2048.GameBoard
             double dParcourir = 0;
             if(directionAbscisse)
             {
-                dParcourir = Math.Abs(posDepart.X - posArrivee.X);
+                dParcourir = Math.Abs(posDepart.X - posArrivee.X) ;
             }
             else
             {
@@ -110,6 +114,7 @@ namespace _2048.GameBoard
             // Timer : speed de l'animation
             Timer t_anim = new Timer(10);
             MainWindow.IsInMovement = true;
+
             t_anim.Elapsed += (sender, e) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -133,19 +138,29 @@ namespace _2048.GameBoard
                     {
                         if ((remonte && Canvas.GetLeft(uc_anim) < posArrivee.X) || (!remonte && Canvas.GetLeft(uc_anim) > posArrivee.X))
                         {
-                            userControl_GameBoardCase_final.ChangeCaseNumber(finalNumber, false);
+                            // permet de régler les conflits d'animation (le if)
+                            if (finalNumber *2 > userControl_GameBoardCase_final.CaseNumber)
+                                userControl_GameBoardCase_final.ChangeCaseNumber(finalNumber, false);
+                            
+
                             canvas_gameBoard_animation.Children.Remove(uc_anim);
                             t_anim.Stop();
                             MainWindow.IsInMovement = false;
+                            MainWindow.IsMovingPossible();
                         }
                     }
                     // ordonnée
                     else if ((remonte && Canvas.GetTop(uc_anim) < posArrivee.Y) || (!remonte && Canvas.GetTop(uc_anim) > posArrivee.Y))
                     {
-                        userControl_GameBoardCase_final.ChangeCaseNumber(finalNumber, false);
+                        // permet de régler les conflits d'animation (le if)
+                        if (finalNumber * 2 > userControl_GameBoardCase_final.CaseNumber)
+                            userControl_GameBoardCase_final.ChangeCaseNumber(finalNumber, false);
+
                         canvas_gameBoard_animation.Children.Remove(uc_anim);
                         t_anim.Stop();
                         MainWindow.IsInMovement = false;
+                        MainWindow.IsMovingPossible();
+
                     }
                 });
             };

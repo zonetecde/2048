@@ -5,16 +5,26 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:_2048"
         mc:Ignorable="d"
-        Title="2048" MinHeight="600" MinWidth="800" SizeChanged="Window_SizeChanged" WindowStartupLocation="CenterScreen" ContentRendered="Window_ContentRendered" KeyDown="Window_KeyDown">
+        Title="2048" MinHeight="600" MinWidth="800" SizeChanged="Window_SizeChanged" WindowStartupLocation="CenterScreen" ContentRendered="Window_ContentRendered" KeyDown="Window_KeyDown" Background="#FFFFFAC6" Icon="/2048_logo.png">
     <Grid>
         <Border x:Name="border_GameBoard" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#FFB1B0AE" CornerRadius="10,10,10,10" BorderThickness="0,0,0,0">
-            <UniformGrid Columns="4" Rows="4" x:Name="uniformGrid_gameBoard" Margin="10,10,10,10" >
+            <Grid>
+                <UniformGrid Columns="4" Rows="4" x:Name="uniformGrid_gameBoard" Margin="10,10,10,10" >
 
-            </UniformGrid>
+                </UniformGrid>
+                <Grid x:Name="grid_gameOver" Background="#CC000000" Visibility="Hidden" MouseDown="grid_gameOver_MouseDown">
+                    <TextBlock x:Name="textblock_gameOver" FontFamily="Consolas" FontSize="35" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="White"/>
+                </Grid>
+            </Grid>
+
         </Border>
 
         <Canvas x:Name="canvas_gameBoard_animation"  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        
-        
+
+        <Border  HorizontalAlignment="Right" VerticalAlignment="Top"  Background="#FFC8C7C7"  Margin="0,20,20,0" CornerRadius="10,10,10,10" Width="110" Height="30">
+            <Label x:Name="label_score" Content="SCORE : 0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Foreground="Black" FontFamily="Consolas" FontSize="14" FontWeight="Bold"/>
+
+        </Border>
+
     </Grid>
 </Window>

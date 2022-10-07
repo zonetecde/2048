@@ -5,13 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:_2048.GameBoard"
              mc:Ignorable="d" 
-             d:DesignHeight="100" d:DesignWidth="100" Margin="10,10,10,10" Tag=" ">
+             d:DesignHeight="100" d:DesignWidth="100" Margin="10,10,10,10" Tag=" " MouseDown="UserControl_MouseDown">
     <Border Background="#FFE4E1DE" CornerRadius="5,5,5,5">
         <Border x:Name="border_case" Background="#FFFFCACA" CornerRadius="5,5,5,5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="0" Height="0">
             <!-- La viewBow permet que le contenu de la textBlock soit affiche le plus grand possible
             en fonction de la taille disponible -->
             <Viewbox HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock x:Name="textBlock_case" FontSize="35" Text="2048" FontFamily="Calibri" FontWeight="Bold" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" />
+                <TextBlock x:Name="textBlock_case" FontSize="35" Text="0" FontFamily="Calibri" FontWeight="Bold" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,10,10,10" />
             </Viewbox>
         </Border>
     </Border>

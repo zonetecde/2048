@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="2048_logo.png" />
     <None Remove="gameBoard_texture_.png" />
   </ItemGroup>
 
@@ -17,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="2048_logo.png" />
     <Resource Include="gameBoard_texture_.png" />
   </ItemGroup>
 
